@@ -2,6 +2,7 @@ require 'rubygems'
 require 'sinatra'
 require 'swoosh'
 require 'json'
+require 'haml'
 
 configure do
   set :fuelkey, 'ca1605577ac688c2fb9906760d78ff82'
@@ -11,35 +12,12 @@ get '/' do
   'You only YOLO once. YOYO'
 end
 
-get '/week' do
-  content_type :json
-  
-  datapoints = Array.new
-  
+get '/fuel/widget' do
   fuelband = Swoosh::Client.new(settings.fuelkey)
-  fuelband.weeks_fuel.reverse.each do |entry|
-    day = entry[:date].strftime('%A')
-    hash = { :title => day, :value => entry[:fuel]}
-    datapoints.push(hash)
-  end
-  
-  {
-    :graph => {
-      :title => 'Nike+ Fuel',
-      :total => true,
-      :type => 'line',
-      :datasequences => [
-          {
-            :title => 'Week',
-            :color => 'blue',
-            :datapoints => datapoints
-          }
-      ]
-    }
-  }.to_json
+  haml :fuel, :locals => {:todays_fuel => fuelband.todays_fuel}
 end
 
-get '/fuel/:days' do
+get '/fuel/graph/:days' do
   content_type :json
   
   to = Time.now
@@ -60,7 +38,7 @@ get '/fuel/:days' do
       :type => 'line',
       :datasequences => [
           {
-            :title => 'Week',
+            :title => "#{params[:days]} Days",
             :color => 'blue',
             :datapoints => datapoints
           }
